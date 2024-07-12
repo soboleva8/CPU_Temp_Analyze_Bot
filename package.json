@@ -1,0 +1,26 @@
+{
+  "name": "cpu_temp_analyze_bot",
+  "version": "1.0.0",
+  "description": "A Bot for monitoring CPU usage",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/soboleva8/CPU_Temp_Analyze_Bot.git"
+  },
+  "keywords": [
+    "telegram",
+    "bot",
+    "antivirus",
+    "system",
+    "monitoring"
+  ],
+  "author": "Sobolev Aleksei",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/soboleva8/CPU_Temp_Analyze_Bot/issues"
+  },
+  "homepage": "https://github.com/soboleva8/CPU_Temp_Analyze_Bot#readme"
+}
