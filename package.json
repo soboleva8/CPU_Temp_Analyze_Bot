@@ -22,5 +22,12 @@
   "bugs": {
     "url": "https://github.com/soboleva8/CPU_Temp_Analyze_Bot/issues"
   },
-  "homepage": "https://github.com/soboleva8/CPU_Temp_Analyze_Bot#readme"
+  "homepage": "https://github.com/soboleva8/CPU_Temp_Analyze_Bot#readme",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "envalid": "^8.0.0",
+    "grammy": "^1.27.0",
+    "systeminformation": "^5.22.11"
+  },
+  "type": "module"
 }

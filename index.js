@@ -25,27 +25,10 @@ let exceedStartTime = null;
 let exceedCount = 0;
 const exceedChecksRequired = Math.ceil(EXCEED_DURATION / MONITOR_INTERVAL);
 
-// Обработка команды /start
 bot.command('start', (ctx) => {
-  ctx.reply("Привет! Я бот для мониторинга системы. Напиши /temperature для получения температуры процессора или /cpu для получения загрузки процессора.");
+  ctx.reply("Привет! Я бот для мониторинга системы. Напиши /cpu для получения загрузки процессора.");
 });
 
-// Обработка команды /temperature
-bot.command('temperature', async (ctx) => {
-  try {
-    const data = await si.cpuTemperature();
-    if (data.main !== null) {
-      ctx.reply(`Температура процессора: ${data.main}°C`);
-    } else {
-      ctx.reply("Не удалось получить температуру процессора. Возможно, сенсоры не поддерживаются.");
-    }
-  } catch (error) {
-    console.error(error);
-    ctx.reply("Произошла ошибка при получении температуры процессора.");
-  }
-});
-
-// Обработка команды /cpu
 bot.command('cpu', async (ctx) => {
   try {
     const load = await si.currentLoad();
@@ -56,7 +39,6 @@ bot.command('cpu', async (ctx) => {
   }
 });
 
-// Функция для мониторинга загрузки процессора
 async function monitorCpuLoad() {
   try {
     const load = await si.currentLoad();
@@ -71,14 +53,12 @@ async function monitorCpuLoad() {
         exceedCount++;
       }
 
-      // Если превышение загрузки происходит достаточно долго
       if (exceedCount >= exceedChecksRequired) {
         await bot.api.sendMessage(GROUP_ID, `Внимание! Загрузка процессора превышает пороговое значение: ${cpuLoad}%`);
         console.log("Бот завершает работу после отправки сообщения.");
-        process.exit(0); // Завершение работы скрипта после отправки сообщения
+        process.exit(0);
       }
     } else {
-      // Если загрузка ниже порога, сбрасываем время и счетчик превышений
       exceedStartTime = null;
       exceedCount = 0;
     }
@@ -87,8 +67,6 @@ async function monitorCpuLoad() {
   }
 }
 
-// Запуск мониторинга загрузки процессора с интервалом
 setInterval(monitorCpuLoad, MONITOR_INTERVAL);
 
-// Запуск бота
 bot.start();
