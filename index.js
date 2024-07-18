@@ -1,4 +1,4 @@
-import { Bot } from 'grammy';
+import { Bot, InlineKeyboard } from 'grammy';
 import si from 'systeminformation';
 import dotenv from 'dotenv';
 import { cleanEnv, str, num } from 'envalid';
@@ -21,25 +21,46 @@ const EXCEED_DURATION = env.EXCEED_DURATION;
 
 const bot = new Bot(BOT_TOKEN);
 
+let monitoringEnabled = true;
 let exceedStartTime = null;
 let exceedCount = 0;
 const exceedChecksRequired = Math.ceil(EXCEED_DURATION / MONITOR_INTERVAL);
 
+const keyboard = new InlineKeyboard()
+  .text("Проверить загрузку CPU", "cpu")
+  .row()
+  .text("Включить мониторинг", "enable_monitoring")
+  .text("Отключить мониторинг", "disable_monitoring");
+
 bot.command('start', (ctx) => {
-  ctx.reply("Привет! Я бот для мониторинга системы. Напиши /cpu для получения загрузки процессора.");
+  ctx.reply("Привет! Я бот для мониторинга системы. Выберите действие:", {
+    reply_markup: keyboard
+  });
 });
 
-bot.command('cpu', async (ctx) => {
-  try {
-    const load = await si.currentLoad();
-    ctx.reply(`Загрузка процессора: ${load.currentLoad.toFixed(2)}%`);
-  } catch (error) {
-    console.error(error);
-    ctx.reply("Произошла ошибка при получении загрузки процессора.");
+bot.on("callback_query:data", async (ctx) => {
+  const action = ctx.callbackQuery.data;
+
+  if (action === "cpu") {
+    try {
+      const load = await si.currentLoad();
+      ctx.reply(`Загрузка процессора: ${load.currentLoad.toFixed(2)}%`);
+    } catch (error) {
+      console.error(error);
+      ctx.reply("Произошла ошибка при получении загрузки процессора.");
+    }
+  } else if (action === "enable_monitoring") {
+    monitoringEnabled = true;
+    ctx.reply("Мониторинг и отправка уведомлений включены.");
+  } else if (action === "disable_monitoring") {
+    monitoringEnabled = false;
+    ctx.reply("Мониторинг и отправка уведомлений отключены.");
   }
 });
 
 async function monitorCpuLoad() {
+  if (!monitoringEnabled) return;
+
   try {
     const load = await si.currentLoad();
     const cpuLoad = parseFloat(load.currentLoad.toFixed(2));
@@ -55,8 +76,9 @@ async function monitorCpuLoad() {
 
       if (exceedCount >= exceedChecksRequired) {
         await bot.api.sendMessage(GROUP_ID, `Внимание! Загрузка процессора превышает пороговое значение: ${cpuLoad}%`);
-        console.log("Бот завершает работу после отправки сообщения.");
-        process.exit(0);
+        monitoringEnabled = false;
+        exceedStartTime = null;
+        exceedCount = 0;
       }
     } else {
       exceedStartTime = null;
