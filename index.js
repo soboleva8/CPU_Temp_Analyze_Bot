@@ -1,4 +1,4 @@
-import { Bot, InlineKeyboard } from 'grammy';
+import { Bot } from 'grammy';
 import si from 'systeminformation';
 import dotenv from 'dotenv';
 import { cleanEnv, str, num } from 'envalid';
@@ -24,24 +24,27 @@ const bot = new Bot(BOT_TOKEN);
 let monitoringEnabled = true;
 let exceedStartTime = null;
 let exceedCount = 0;
+let belowThresholdCount = 0;
 const exceedChecksRequired = Math.ceil(EXCEED_DURATION / MONITOR_INTERVAL);
-
-const keyboard = new InlineKeyboard()
-  .text("Проверить загрузку CPU", "cpu")
-  .row()
-  .text("Включить мониторинг", "enable_monitoring")
-  .text("Отключить мониторинг", "disable_monitoring");
+const belowThresholdChecksRequired = 3;
 
 bot.command('start', (ctx) => {
   ctx.reply("Привет! Я бот для мониторинга системы. Выберите действие:", {
-    reply_markup: keyboard
+    reply_markup: {
+      keyboard: [
+        [{ text: 'Проверить загрузку CPU' }],
+        [{ text: 'Включить мониторинг' }, { text: 'Отключить мониторинг' }]
+      ],
+      resize_keyboard: true,
+      one_time_keyboard: true
+    }
   });
 });
 
-bot.on("callback_query:data", async (ctx) => {
-  const action = ctx.callbackQuery.data;
+bot.on('message:text', async (ctx) => {
+  const text = ctx.message.text;
 
-  if (action === "cpu") {
+  if (text === 'Проверить загрузку CPU') {
     try {
       const load = await si.currentLoad();
       ctx.reply(`Загрузка процессора: ${load.currentLoad.toFixed(2)}%`);
@@ -49,10 +52,10 @@ bot.on("callback_query:data", async (ctx) => {
       console.error(error);
       ctx.reply("Произошла ошибка при получении загрузки процессора.");
     }
-  } else if (action === "enable_monitoring") {
+  } else if (text === 'Включить мониторинг') {
     monitoringEnabled = true;
     ctx.reply("Мониторинг и отправка уведомлений включены.");
-  } else if (action === "disable_monitoring") {
+  } else if (text === 'Отключить мониторинг') {
     monitoringEnabled = false;
     ctx.reply("Мониторинг и отправка уведомлений отключены.");
   }
@@ -79,10 +82,15 @@ async function monitorCpuLoad() {
         monitoringEnabled = false;
         exceedStartTime = null;
         exceedCount = 0;
+        belowThresholdCount = 0;
       }
     } else {
-      exceedStartTime = null;
-      exceedCount = 0;
+      belowThresholdCount++;
+
+      if (belowThresholdCount >= belowThresholdChecksRequired) {
+        exceedStartTime = null;
+        exceedCount = 0;
+      }
     }
   } catch (error) {
     console.error("Произошла ошибка при мониторинге загрузки процессора:", error);
