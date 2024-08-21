@@ -19,6 +19,10 @@ const CPU_THRESHOLD = env.CPU_THRESHOLD;
 const MONITOR_INTERVAL = env.MONITOR_INTERVAL;
 const EXCEED_DURATION = env.EXCEED_DURATION;
 
+const buttonCPUTest = 'Проверить загрузку CPU';
+const buttonEnableMonitoring = 'Включить мониторинг';
+const buttonDisableMonitoring = 'Отключить мониторинг';
+
 const bot = new Bot(BOT_TOKEN);
 
 let monitoringEnabled = true;
@@ -32,8 +36,8 @@ bot.command('start', (ctx) => {
   ctx.reply("Привет! Я бот для мониторинга системы. Выберите действие:", {
     reply_markup: {
       keyboard: [
-        [{ text: 'Проверить загрузку CPU' }],
-        [{ text: 'Включить мониторинг' }, { text: 'Отключить мониторинг' }]
+        [{ text: buttonCPUTest }],
+        [{ text: buttonEnableMonitoring }, { text: buttonDisableMonitoring }]
       ],
       resize_keyboard: true,
       one_time_keyboard: true
@@ -44,7 +48,7 @@ bot.command('start', (ctx) => {
 bot.on('message:text', async (ctx) => {
   const text = ctx.message.text;
 
-  if (text === 'Проверить загрузку CPU') {
+  if (text === buttonCPUTest) {
     try {
       const load = await si.currentLoad();
       ctx.reply(`Загрузка процессора: ${load.currentLoad.toFixed(2)}%`);
@@ -52,10 +56,10 @@ bot.on('message:text', async (ctx) => {
       console.error(error);
       ctx.reply("Произошла ошибка при получении загрузки процессора.");
     }
-  } else if (text === 'Включить мониторинг') {
+  } else if (text === buttonEnableMonitoring) {
     monitoringEnabled = true;
     ctx.reply("Мониторинг и отправка уведомлений включены.");
-  } else if (text === 'Отключить мониторинг') {
+  } else if (text === buttonDisableMonitoring) {
     monitoringEnabled = false;
     ctx.reply("Мониторинг и отправка уведомлений отключены.");
   }
